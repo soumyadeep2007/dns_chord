@@ -9,15 +9,21 @@ class Node(process):
         self._predecessor = predecessor
         self._successor = successor
         self._finger = []  # 0th entry is blank
+        self._records = {}
 
-    # will either return
-    def find_successor(id):
-        if id <= self._successor[ID] or id <= ((1 << self._m) + id):
-            return self._successor
+    def receive(msg=('get', query, client)):
+        send(('result', self._records[query['id']]), to=client)
+        output(self._id, ' Sent result to: ', client)
+
+    def receive(msg=('find_successor', query)):
+        if query['id'] <= self._successor[ID] or query['id'] <= ((1 << self._m) + query['id']):
+            node = self._successor
+            send(('successor', query, node), to=query['client'])
+            output(self._id, ' Sent successor to: ', query['client'])
         else:
-            cpn = self.closest_preceding_node(id)
-            send(('find_successor', id), to=cpn[PROCESS_ID])
-            output('Sent find_successor query to: ', cpn)
+            node = self.closest_preceding_node(query['id'])
+            send(('find_successor', query), to=node[PROCESS_ID])
+            output(self._id, ' Delegated find_successor query to: ', node)
 
     def closest_preceding_node(id):
         for i in range(self._m, 0, -1):
@@ -25,7 +31,7 @@ class Node(process):
                 return self._finger[i]
 
     def _calculate_id(key, m):
-        self._id = hash(key) % (1 << m)
+        return hash(key) % (1 << m)
 
     def _in_range(s, e, id):  # id in range (s, e]?
         if id < s:
@@ -33,4 +39,3 @@ class Node(process):
         if e < s:
             e += ((1 << self._m) - 1)
         return (id > s and id <= e)
-

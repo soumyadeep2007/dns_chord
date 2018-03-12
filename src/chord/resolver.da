@@ -1,0 +1,42 @@
+import random
+
+ID = 0
+PROCESS_ID = 1
+
+
+class Resolver(process):
+    def setup(process_id, m, nodes):
+        self._process_id = process_id
+        self._m = m
+        self._nodes = nodes
+
+        self._query_count = 0
+
+    def resolve(name):
+        #  Resolve a request for a name by finding the node for which the given request maps to
+        node = random.choice(self._nodes)
+        self._query_count += 1
+        query = {
+            'key': name,
+            'id': self._calculate_id(name, self._m),
+            'request_id': self._next_request_id(),
+            'client': self._process_id
+        }
+        send(('find_successor', query), to=node[PROCESS_ID])
+
+    def receive(msg=('successor', query, successor), from_=self._nodes):
+        #  Once the successor(owner) of the key is found, lookup the key's value.
+        send(('get', id), to=successor[PROCESS_ID])
+        output('successor (%s)= ' % id, successor)
+        output('Sent get to: ', successor)
+
+    def receive(msg=('result', query, result, successor), from_=self._nodes):
+        #  Dipslay the result obtained for a particular query
+        output('Request ID: %s, Question: %s, Answer: %s, By: %s' %
+               (query['request_id'], query['key'], result, successor))
+
+    def _calculate_id(key, m):
+        return hash(key) % (1 << m)
+
+    def _next_request_id():
+        return self._process_id + '-' + self._query_count
