@@ -9,27 +9,30 @@ class Node(process):
         self._m = m
         self._predecessor = predecessor
         self._successor = successor
-        self._finger = finger  # 0th entry is blank
+        self._finger = finger
         self._records = records
 
     def run():
-        output('{node} is up: pred={p}, succ={s}, finger={f}'
-               .format(node=self._node_desc, p=self._predecessor, s=self._successor, f=self._finger))
+        output('{node} is up: pred={p}, succ={s}, finger={f}, records={r}'
+               .format(node=self._node_desc, p=self._predecessor,
+                       s=self._successor, f=self._finger, r=list(self._records.items())))
         await(False)
 
     def receive(msg=('get', query, client)):
         send(('result', self._records[query['id']]), to=client)
-        output(self._node_desc, ' Sent result to: ', client)
+        output('{node} sent result to: {client}'.format(node=self._node_desc, client=client))
 
     def receive(msg=('find_successor', query)):
         if query['id'] <= self._successor[ID] or query['id'] <= ((1 << self._m) + query['id']):
             node = self._successor
             send(('successor', query, node), to=query['client'])
-            output(self._node_desc, ' Sent successor to: ', query['client'])
+            output('{node} sent successor for query={query} to: {client}'
+                   .format(node=self._node_desc, query=query, client=query['client']))
         else:
             node = self.closest_preceding_node(query['id'])
             send(('find_successor', query), to=node[PROCESS_ID])
-            output(self._node_desc, ' Delegated find_successor query to: ', node)
+            output('{node} delegated find_successor for query={query} to: {delegatee}'
+                   .format(node=self._node_desc, query=query, delegatee=node))
 
     def closest_preceding_node(id):
         for i in range(self._m - 1, -1, -1):

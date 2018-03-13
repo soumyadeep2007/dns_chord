@@ -10,16 +10,31 @@ def _calculate_id(key, m):
 
 def _get_records_for_node(node_index, record_ids_sorted, node_ids_sorted, records_by_id):
     #  distributed records for each node
-    lo = bisect.bisect_left(record_ids_sorted, node_ids_sorted[node_index - 1])
+    lo_id = node_ids_sorted[node_index - 1]
+    hi_id = node_ids_sorted[node_index]
+
+    lo = bisect.bisect_left(record_ids_sorted, lo_id)
     if node_ids_sorted[node_index - 1] == record_ids_sorted[lo]:
         lo += 1
-    hi = bisect.bisect_left(record_ids_sorted, node_ids_sorted[node_index])
-    if node_ids_sorted[node_index] < record_ids_sorted[hi]:
-        hi -= 1
+
     records = {}
-    for i in range(lo, hi + 1):
-        record_id = record_ids_sorted[i]
-        records[record_id] = records_by_id[record_id]
+    if lo_id <= hi_id:
+        i = lo
+        while record_ids_sorted[i] <= hi_id:
+            record_id = record_ids_sorted[i]
+            records[record_id] = records_by_id[record_id]
+            i += 1
+
+    else:
+        for i in range(lo, len(record_ids_sorted)):
+            record_id = record_ids_sorted[i]
+            records[record_id] = records_by_id[record_id]
+        i = 0
+        while record_ids_sorted[i] <= hi_id:
+            record_id = record_ids_sorted[i]
+            records[record_id] = records_by_id[record_id]
+            i += 1
+
     return records
 
 
@@ -70,6 +85,8 @@ def main():
 
     output(len(node_descs))
     output(len(node_ids_sorted))
+    output('record_ids_sorted:', record_ids_sorted)
+    output('node_ids_sorted:', node_ids_sorted)
 
     for i in range(0, len(node_ids_sorted)):
         predecessor = node_descs[i - 1]
