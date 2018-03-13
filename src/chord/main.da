@@ -1,0 +1,87 @@
+import bisect
+
+m_Resolver = import_da('resolver')
+m_Node = import_da('node')
+
+
+def _calculate_id(key, m):
+    return hash(key) % (1 << m)
+
+
+def _get_records_for_node(node_index, record_ids_sorted, node_ids_sorted, records_by_id):
+    #  distributed records for each node
+    lo = bisect.bisect_left(record_ids_sorted, node_ids_sorted[node_index - 1])
+    if node_ids_sorted[node_index - 1] == record_ids_sorted[lo]:
+        lo += 1
+    hi = bisect.bisect_left(record_ids_sorted, node_ids_sorted[node_index])
+    if node_ids_sorted[node_index] < record_ids_sorted[hi]:
+        hi -= 1
+    records = {}
+    for i in range(lo, hi + 1):
+        record_id = record_ids_sorted[i]
+        records[record_id] = records_by_id[record_id]
+    return records
+
+
+def _get_finger(node_index, m, node_descs, node_ids_sorted):
+    #  construct the finger table for a specific node
+    id = node_ids_sorted[node_index]
+    finger = []
+    for i in range(0, m):
+        inc = 1 << i
+        index = bisect.bisect_left(node_ids_sorted, (id + inc) % (1 << m))
+        finger.append(node_descs[index % len(node_descs)])
+    return finger
+
+
+def main():
+    m = 6
+    records = [
+        ('a.com', '192.45.1.2'),
+        ('b.edu', '192.45.1.2'),
+        ('c.org', '192.49.1.20'),
+        ('d.tb', '194.45.12.2'),
+        ('www.google.com', '192.45.1.212'),
+        ('mail.stony.edu', '192.45.111.2'),
+        ('o.com', '194.45.1.26'),
+        ('t.com', '193.41.1.2'),
+        ('e.com', '199.42.1.12'),
+        ('f.com', '190.45.1.33')
+    ]
+    records_by_id = {_calculate_id(record[0], m): record for record in records}
+    record_ids_sorted = list(records_by_id.keys())
+    record_ids_sorted.sort()
+    node_ips = ['1.2.3.5', '2.3.4.5', '11.22.33.55', '8.8.8.9', '2.22.1.2', '77.66.3.1']
+    node_ips_by_id = {_calculate_id(node_ip, m): node_ip for node_ip in node_ips}
+    node_ids_sorted = list(node_ips_by_id.keys())
+    print('len(node_ids_sorted) = ', len(node_ids_sorted))
+    node_ids_sorted.sort()
+    workload = ['a.com', 't.com', 'e.com']
+
+    config(channel={'reliable', 'fifo'})
+    node_process_ids = list(new(m_Node.Node, num=len(node_ids_sorted)))
+
+    node_descs = []
+    for i in range(0, len(node_ids_sorted)):
+        id = node_ids_sorted[i]
+        process_id = node_process_ids[i]
+        ip = node_ips_by_id[node_ids_sorted[i]]
+        node_descs.append((id, process_id, ip))
+
+    output(len(node_descs))
+    output(len(node_ids_sorted))
+
+    for i in range(0, len(node_ids_sorted)):
+        predecessor = node_descs[i - 1]
+        successor = node_descs[(i + 1) % len(node_ids_sorted)]
+        finger = _get_finger(i, m, node_descs, node_ids_sorted)
+        records = _get_records_for_node(i, record_ids_sorted, node_ids_sorted, records_by_id)
+        setup(node_process_ids[i], args=(node_descs[i], m, predecessor, successor, finger, records))
+
+    start(node_process_ids)
+
+    resolver_process_id = new(m_Resolver.Resolver)
+    setup(resolver_process_id, args=(resolver_process_id, m, node_descs, workload))
+    start(resolver_process_id)
+
+    await(False)
