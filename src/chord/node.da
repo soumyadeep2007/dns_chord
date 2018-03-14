@@ -23,11 +23,11 @@ class Node(process):
         output('{node} sent result to: {client}'.format(node=self._node_desc, client=client))
 
     def receive(msg=('find_successor', query)):
-        if query['id'] <= self._successor[ID] or query['id'] <= ((1 << self._m) + query['id']):
+        if self._in_range(self._node_desc[ID], self._successor[ID], query['id']):
             node = self._successor
             send(('successor', query, node), to=query['client'])
-            output('{node} sent successor for query={query} to: {client}'
-                   .format(node=self._node_desc, query=query, client=query['client']))
+            output('{node} sent successor={successor} for query={query} to: {client}'
+                   .format(node=self._node_desc, successor=node, query=query, client=query['client']))
         else:
             node = self.closest_preceding_node(query['id'])
             send(('find_successor', query), to=node[PROCESS_ID])
@@ -36,7 +36,7 @@ class Node(process):
 
     def closest_preceding_node(id):
         for i in range(self._m - 1, -1, -1):
-            if self._finger[i] < id or self._finger[i] < ((1 << self._m) + id):
+            if self._in_range(self._node_desc[ID], id, self._finger[i][ID]):
                 return self._finger[i]
 
     def _in_range(s, e, id):  # id in range (s, e]?
