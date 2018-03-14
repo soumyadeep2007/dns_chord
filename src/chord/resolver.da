@@ -1,5 +1,5 @@
 import random
-
+import hashlib
 
 class Resolver(process):
     def setup(process_id, m, node_descs, workload):
@@ -41,7 +41,9 @@ class Resolver(process):
                format(rid=query['request_id'], key=query['key'], result=result, authority=authority))
 
     def _calculate_id(key, m):
-        return hash(key) % (1 << m)
+        h = int(hashlib.sha1(key.encode('utf-8')).hexdigest(), 16)
+        id = h % (1 << m)
+        return id
 
     def _next_request_id():
         return str(self._process_id) + '-' + str(self._query_count)

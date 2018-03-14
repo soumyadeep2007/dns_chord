@@ -1,11 +1,14 @@
 import bisect
+import hashlib
 
 m_Resolver = import_da('resolver')
 m_Node = import_da('node')
 
 
 def _calculate_id(key, m):
-    return hash(key) % (1 << m)
+    h = int(hashlib.sha1(key.encode('utf-8')).hexdigest(), 16)
+    id = h % (1 << m)
+    return id
 
 
 def _get_records_for_node(node_index, record_ids_sorted, node_ids_sorted, records_by_id):
