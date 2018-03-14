@@ -15,6 +15,7 @@ class Resolver(process):
         output(self._process_id, " (resolver) is online.")
         for name in self._workload:
             self._resolve(name)
+        await(False)
 
     def _resolve(name):
         #  Resolve a request for a name by finding the node for which the given request maps to
@@ -31,14 +32,13 @@ class Resolver(process):
 
     def receive(msg=('successor', query, successor)):
         #  Once the successor(owner) of the key is found, lookup the key's value.
-        send(('get', id), to=successor[1])
-        output('successor (%s)= ' % id, successor)
+        send(('get', query), to=successor[1])
         output('Sent get to: ', successor)
 
-    def receive(msg=('result', query, result, successor)):
+    def receive(msg=('result', query, result, authority)):
         #  Dipslay the result obtained for a particular query
-        output('Request ID: {rid}, Question: {key}, Answer: {result}, By: {successor}'.
-               format(rid=query['request_id'], key=query['key'], result=result, successor=successor))
+        output('Request ID: {rid}, Question: {key}, Answer: {result}, By: {authority}'.
+               format(rid=query['request_id'], key=query['key'], result=result, authority=authority))
 
     def _calculate_id(key, m):
         return hash(key) % (1 << m)

@@ -18,9 +18,10 @@ class Node(process):
                        s=self._successor, f=self._finger, r=list(self._records.items())))
         await(False)
 
-    def receive(msg=('get', query, client)):
-        send(('result', self._records[query['id']]), to=client)
-        output('{node} sent result to: {client}'.format(node=self._node_desc, client=client))
+    def receive(msg=('get', query)):
+        send(('result', query, self._records.get(query['id'], None), self._node_desc), to=query['client'])
+        output('{node} sent result of query = {query} to: {client}'
+               .format(node=self._node_desc, query=query, client=query['client']))
 
     def receive(msg=('find_successor', query)):
         if self._in_range(self._node_desc[ID], self._successor[ID], query['id']):
