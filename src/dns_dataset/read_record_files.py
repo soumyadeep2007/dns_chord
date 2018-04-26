@@ -11,7 +11,7 @@ def extract_input_from_json(filename):
     :param filename:File name of the dataset.
     """
     file = open(filename)
-    writer = open('dns_name_value.txt', 'w')
+    writer = open('../../data/dns_records.txt', 'w')
     for line in file.readlines():
         tuples = line.strip()[1:-1].split(',')
         name = tuples[1].split('":"')[1][:-1]
@@ -31,3 +31,6 @@ def get_records_array(filename):
         for ln in file.readlines():
             records.append(tuple(ln.strip().split(' ')))
     return records
+
+
+extract_input_from_json('../../data/random_dns_records.txt')
