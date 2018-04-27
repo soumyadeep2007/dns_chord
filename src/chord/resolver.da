@@ -1,6 +1,7 @@
 import random
 import hashlib
 
+
 class Resolver(process):
     def setup(process_id, m, node_descs, workload):
         self._process_id = process_id
@@ -36,7 +37,7 @@ class Resolver(process):
         output('Sent get to: ', successor)
 
     def receive(msg=('result', query, result, authority)):
-        #  Dipslay the result obtained for a particular query
+        #  Display the result obtained for a particular query
         output('Request ID: {rid}, Question: {key}, Answer: {result}, By: {authority}'.
                format(rid=query['request_id'], key=query['key'], result=result, authority=authority))
 

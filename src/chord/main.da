@@ -1,5 +1,10 @@
 import bisect
 import hashlib
+import random
+from math import log, ceil
+
+import os
+from cffi.backend_ctypes import xrange
 
 m_Resolver = import_da('resolver')
 m_Node = import_da('node')
@@ -52,29 +57,50 @@ def _get_finger(node_index, m, node_descs, node_ids_sorted):
     return finger
 
 
+def get_records_array(filename):
+    """
+    Get records from array
+    :param filename: filename which to read. It must have 'name value' pairs seperated by space.
+    :return: Return an array
+    """
+    records = []
+    with open(file=filename) as file:
+        for ln in file.readlines():
+            records.append(tuple(ln.strip().split(' ')))
+    return records
+
+
 def main():
-    m = 6
-    records = [
-        ('a.com', '192.45.1.2'),
-        ('b.edu', '192.45.1.2'),
-        ('c.org', '192.49.1.20'),
-        ('d.tb', '194.45.12.2'),
-        ('www.google.com', '192.45.1.212'),
-        ('mail.stony.edu', '192.45.111.2'),
-        ('o.com', '194.45.1.26'),
-        ('t.com', '193.41.1.2'),
-        ('e.com', '199.42.1.12'),
-        ('f.com', '190.45.1.33')
-    ]
+    # m = 6
+    # records = [
+    #     ('a.com', '192.45.1.2'),
+    #     ('b.edu', '192.45.1.2'),
+    #     ('c.org', '192.49.1.20'),
+    #     ('d.tb', '194.45.12.2'),
+    #     ('www.google.com', '192.45.1.212'),
+    #     ('mail.stony.edu', '192.45.111.2'),
+    #     ('o.com', '194.45.1.26'),
+    #     ('t.com', '193.41.1.2'),
+    #     ('e.com', '199.42.1.12'),
+    #     ('f.com', '190.45.1.33')
+    # ]
+    records = get_records_array('data/dns_records.txt')
+    m = ceil(log(len(records), 2))
+
     records_by_id = {_calculate_id(record[0], m): record for record in records}
     record_ids_sorted = list(records_by_id.keys())
     record_ids_sorted.sort()
-    node_ips = ['1.2.3.5', '2.3.4.5', '11.22.33.55', '8.8.8.9', '2.22.1.2', '77.66.3.1']
+    # node_ips = ['1.2.3.5', '2.3.4.5', '11.22.33.55', '8.8.8.9', '2.22.1.2', '77.66.3.1']
+    node_ips = ['1.2.3.5', '2.3.4.5', '11.22.33.55', '8.8.8.9', '2.22.1.2', '77.66.3.1',
+                '1.2.3.6', '2.3.4.6', '11.22.33.56', '8.8.8.10', '2.22.1.3', '77.66.3.2',
+                '1.2.3.7', '2.3.4.7']
     node_ips_by_id = {_calculate_id(node_ip, m): node_ip for node_ip in node_ips}
     node_ids_sorted = list(node_ips_by_id.keys())
     print('len(node_ids_sorted) = ', len(node_ids_sorted))
     node_ids_sorted.sort()
-    workload = ['a.com', 't.com', 'e.com']
+    # workload = ['a.com', 't.com', 'e.com']
+    workload = [records[i][0] for i in random.sample(xrange(len(records)), len(records))]
+    print(workload)
 
     config(channel={'reliable', 'fifo'})
     node_process_ids = list(new(m_Node.Node, num=len(node_ids_sorted)))
@@ -88,7 +114,7 @@ def main():
 
     output(len(node_descs))
     output(len(node_ids_sorted))
-    output('record_ids_sorted:', record_ids_sorted)
+    # output('record_ids_sorted:', record_ids_sorted)
     output('node_ids_sorted:', node_ids_sorted)
 
     for i in range(0, len(node_ids_sorted)):
