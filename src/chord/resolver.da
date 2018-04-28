@@ -1,5 +1,6 @@
 import random
 import hashlib
+import time
 
 
 class Resolver(process):
@@ -11,6 +12,7 @@ class Resolver(process):
         self._workload = workload
 
         self._query_count = 0
+        self._resolution_latencies = {}
 
     def run():
         output(self._process_id, " (resolver) is online.")
@@ -28,6 +30,7 @@ class Resolver(process):
             'request_id': self._next_request_id(),
             'client': self._process_id
         }
+        self._resolution_latencies[query['request_id']] = time.time()
         send(('find_successor', query), to=node_desc[1])
         output('Sent find_successor message for query: {q} to {node}'.format(q=query, node=node_desc))
 
@@ -38,8 +41,12 @@ class Resolver(process):
 
     def receive(msg=('result', query, result, authority)):
         #  Display the result obtained for a particular query
+        self._resolution_latencies[query['request_id']] = time.time() - self._resolution_latencies[query['request_id']]
         output('Request ID: {rid}, Question: {key}, Answer: {result}, By: {authority}'.
                format(rid=query['request_id'], key=query['key'], result=result, authority=authority))
+        if('10000' in query['request_id']):
+            avg_res_time = sum(self._resolution_latencies.values()) / len(self._resolution_latencies.values())
+            print('Avg resolution time:', avg_res_time)
 
     def _calculate_id(key, m):
         h = int(hashlib.sha1(key.encode('utf-8')).hexdigest(), 16)
