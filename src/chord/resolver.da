@@ -12,7 +12,10 @@ class Resolver(process):
         self._workload = workload
 
         self._query_count = 0
-        self._resolution_latencies = {}
+        self._start_end_times = dict()
+        self._start_times = dict()
+        self._end_times = dict()
+        self._resolution_latencies = set()
 
     def run():
         output(self._process_id, " (resolver) is online.")
@@ -30,7 +33,7 @@ class Resolver(process):
             'request_id': self._next_request_id(),
             'client': self._process_id
         }
-        self._resolution_latencies[query['request_id']] = time.time()
+        self._start_times[query['request_id']] = time.time()
         send(('find_successor', query), to=node_desc[1])
         output('Sent find_successor message for query: {q} to {node}'.format(q=query, node=node_desc))
 
@@ -41,11 +44,13 @@ class Resolver(process):
 
     def receive(msg=('result', query, result, authority)):
         #  Display the result obtained for a particular query
-        self._resolution_latencies[query['request_id']] = time.time() - self._resolution_latencies[query['request_id']]
+        self._end_times[query['request_id']] = time.time()
+        self._resolution_latencies.add(self._end_times[query['request_id']] - self._start_times[query['request_id']])
         output('Request ID: {rid}, Question: {key}, Answer: {result}, By: {authority}'.
                format(rid=query['request_id'], key=query['key'], result=result, authority=authority))
-        if('10000' in query['request_id']):
-            avg_res_time = sum(self._resolution_latencies.values()) / len(self._resolution_latencies.values())
+
+        if(len(self._end_times) == len(self._start_times)):
+            avg_res_time = sum(self._resolution_latencies) / len(self._resolution_latencies)
             print('Avg resolution time:', avg_res_time)
 
     def _calculate_id(key, m):

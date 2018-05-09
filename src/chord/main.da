@@ -85,7 +85,8 @@ def main():
     #     ('f.com', '190.45.1.33')
     # ]
     records = get_records_array('data/dns_records.txt')
-    m = ceil(log(len(records), 2))
+    m = 20
+    # m = ceil(log(len(records), 2))
 
     records_by_id = {_calculate_id(record[0], m): record for record in records}
     record_ids_sorted = list(records_by_id.keys())
@@ -101,6 +102,7 @@ def main():
     print('len(node_ids_sorted) = ', len(node_ids_sorted))
     node_ids_sorted.sort()
     # workload = ['a.com', 't.com', 'e.com']
+
     workload = [records[i][0] for i in random.sample(xrange(len(records)), len(records))]
     print(workload)
 
