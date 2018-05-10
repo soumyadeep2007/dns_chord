@@ -115,7 +115,7 @@ def main():
     # workload = ['a.com', 't.com', 'e.com']
 
     workload = [records[i][0] for i in random.sample(xrange(len(records)), len(records))]
-    # workload = workload[:10]
+    # workload = workload[:]
     print(workload)
 
     config(channel={'reliable', 'fifo'})
