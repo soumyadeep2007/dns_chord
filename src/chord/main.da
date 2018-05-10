@@ -1,7 +1,7 @@
 import bisect
 import hashlib
 import random
-from math import log, ceil
+import pickle
 
 import os
 from cffi.backend_ctypes import xrange
@@ -67,8 +67,18 @@ def get_records_array(filename):
     with open(file=filename) as file:
         for ln in file.readlines():
             records.append(tuple(ln.strip().split(' ')))
+
     return records
 
+def sleepTimes():
+    """
+    Get time distribution from pickle
+    :param None
+    :return: Return an kde distribution
+    """
+    inp_file = open("kernel_density_model.pickle", "rb")
+    kde = pickle.load(inp_file)
+    return kde
 
 def main():
     # m = 6
@@ -85,7 +95,9 @@ def main():
     #     ('f.com', '190.45.1.33')
     # ]
     records = get_records_array('data/dns_records.txt')
-    m = ceil(log(len(records), 2))
+    kde = sleepTimes()
+    m = 20
+    # m = ceil(log(len(records), 2))
 
     records_by_id = {_calculate_id(record[0], m): record for record in records}
     record_ids_sorted = list(records_by_id.keys())
@@ -101,7 +113,9 @@ def main():
     print('len(node_ids_sorted) = ', len(node_ids_sorted))
     node_ids_sorted.sort()
     # workload = ['a.com', 't.com', 'e.com']
+
     workload = [records[i][0] for i in random.sample(xrange(len(records)), len(records))]
+    # workload = workload[:10]
     print(workload)
 
     config(channel={'reliable', 'fifo'})
@@ -124,12 +138,12 @@ def main():
         successor = node_descs[(i + 1) % len(node_ids_sorted)]
         finger = _get_finger(i, m, node_descs, node_ids_sorted)
         records = _get_records_for_node(i, record_ids_sorted, node_ids_sorted, records_by_id)
-        setup(node_process_ids[i], args=(node_descs[i], m, predecessor, successor, finger, records))
+        setup(node_process_ids[i], args=(node_descs[i], m, predecessor, successor, finger, records, kde))
 
     start(node_process_ids)
 
     resolver_process_id = new(m_Resolver.Resolver)
-    setup(resolver_process_id, args=(resolver_process_id, m, node_descs, workload))
+    setup(resolver_process_id, args=(resolver_process_id, m, node_descs, workload, kde))
     start(resolver_process_id)
 
     await(False)
