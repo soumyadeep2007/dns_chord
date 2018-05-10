@@ -1,10 +1,13 @@
 import random
 import hashlib
 import time
-
+# from scipy.stats import norm
+# import pickle
+# import numpy as np
+# from sklearn.neighbors import KernelDensity
 
 class Resolver(process):
-    def setup(process_id, m, node_descs, workload):
+    def setup(process_id, m, node_descs, workload, kde):
         self._process_id = process_id
         self._m = m
         self._node_descs = node_descs
@@ -16,6 +19,8 @@ class Resolver(process):
         self._start_times = dict()
         self._end_times = dict()
         self._resolution_latencies = set()
+        self._kde = kde
+        self._hops = 0
 
     def run():
         output(self._process_id, " (resolver) is online.")
@@ -31,23 +36,30 @@ class Resolver(process):
             'key': name,
             'id': self._calculate_id(name, self._m),
             'request_id': self._next_request_id(),
-            'client': self._process_id
+            'client': self._process_id,
+            'hops' : self._hops
         }
         self._start_times[query['request_id']] = time.time()
+
         send(('find_successor', query), to=node_desc[1])
         output('Sent find_successor message for query: {q} to {node}'.format(q=query, node=node_desc))
 
     def receive(msg=('successor', query, successor)):
         #  Once the successor(owner) of the key is found, lookup the key's value.
+
+        sleepTime = self._kde.sample(1)
+        time.sleep(sleepTime[0]/1000)
         send(('get', query), to=successor[1])
         output('Sent get to: ', successor)
 
     def receive(msg=('result', query, result, authority)):
         #  Display the result obtained for a particular query
+        sleepTime = self._kde.sample(1)
+        time.sleep(sleepTime[0]/1000)
         self._end_times[query['request_id']] = time.time()
         self._resolution_latencies.add(self._end_times[query['request_id']] - self._start_times[query['request_id']])
-        output('Request ID: {rid}, Question: {key}, Answer: {result}, By: {authority}'.
-               format(rid=query['request_id'], key=query['key'], result=result, authority=authority))
+        output('Request ID: {rid}, Question: {key}, Answer: {result}, By: {authority}, Total Hops: {hops}'.
+               format(rid=query['request_id'], key=query['key'], result=result, authority=authority, hops=query['hops']))
 
         if(len(self._end_times) == len(self._start_times)):
             avg_res_time = sum(self._resolution_latencies) / len(self._resolution_latencies)
