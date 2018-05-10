@@ -21,6 +21,8 @@ class Resolver(process):
         self._resolution_latencies = set()
         self._kde = kde
         self._hops = 0
+        self._sleep_time = 0
+        self._namesList = list()
 
     def run():
         output(self._process_id, " (resolver) is online.")
@@ -37,7 +39,9 @@ class Resolver(process):
             'id': self._calculate_id(name, self._m),
             'request_id': self._next_request_id(),
             'client': self._process_id,
-            'hops' : self._hops
+            'hops' : self._hops,
+            'sleepTime' : self._sleep_time,
+            'hops_name_list' : self._namesList
         }
         self._start_times[query['request_id']] = time.time()
 
@@ -48,22 +52,26 @@ class Resolver(process):
         #  Once the successor(owner) of the key is found, lookup the key's value.
 
         sleepTime = self._kde.sample(1)
-        time.sleep(sleepTime[0]/1000)
+        query['sleepTime'] += sleepTime[0] / 2000
         send(('get', query), to=successor[1])
         output('Sent get to: ', successor)
 
     def receive(msg=('result', query, result, authority)):
         #  Display the result obtained for a particular query
         sleepTime = self._kde.sample(1)
-        time.sleep(sleepTime[0]/1000)
+        query['sleepTime'] += sleepTime[0] / 2000
         self._end_times[query['request_id']] = time.time()
-        self._resolution_latencies.add(self._end_times[query['request_id']] - self._start_times[query['request_id']])
-        output('Request ID: {rid}, Question: {key}, Answer: {result}, By: {authority}, Total Hops: {hops}'.
-               format(rid=query['request_id'], key=query['key'], result=result, authority=authority, hops=query['hops']))
+        self._resolution_latencies.add((self._end_times[query['request_id']] - self._start_times[query['request_id']]))
+        output('Request ID: {rid}, Question: {key}, Answer: {result}, By: {authority}, Total Hops: {hops}, '
+                    'Sleep Time: {sleepTime}, Resolution Time: {resTime}, Nodes List: {nodesList}'.
+                        format(rid=query['request_id'], key=query['key'], result=result, authority=authority,
+                               hops=query['hops'], sleepTime=query['sleepTime'],
+                               resTime=(self._end_times[query['request_id']] - self._start_times[query['request_id']]),
+                                    nodesList=query['hops_name_list']))
 
-        if(len(self._end_times) == len(self._start_times)):
-            avg_res_time = sum(self._resolution_latencies) / len(self._resolution_latencies)
-            print('Avg resolution time:', avg_res_time)
+        # if(len(self._end_times) == len(self._start_times)):
+        #     avg_res_time = sum(self._resolution_latencies) / len(self._resolution_latencies)
+        #     print('Avg resolution time:', avg_res_time)
 
     def _calculate_id(key, m):
         h = int(hashlib.sha1(key.encode('utf-8')).hexdigest(), 16)

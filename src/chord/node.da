@@ -22,16 +22,19 @@ class Node(process):
 
     def receive(msg=('get', query)):
         sleepTime = self._kde.sample(1)
-        time.sleep(sleepTime[0] / 1000)
+        # time.sleep(sleepTime[0] / 1000)
+        query['sleepTime'] += sleepTime[0] / 2000
         query['hops'] += 1
+        query['hops_name_list'].append(self._node_desc[2])
         send(('result', query, self._records.get(query['id'], None), self._node_desc), to=query['client'])
         output('{node} sent result of query = {query} to: {client}'
                .format(node=self._node_desc, query=query, client=query['client']))
 
     def receive(msg=('find_successor', query)):
         sleepTime = self._kde.sample(1)
-        time.sleep(sleepTime[0] / 1000)
+        query['sleepTime'] += sleepTime[0] / 2000
         query['hops'] += 1
+        query['hops_name_list'].append(self._node_desc[2])
         if self._in_range(self._node_desc[ID], self._successor[ID], query['id']):
             node = self._successor
             send(('successor', query, node), to=query['client'])

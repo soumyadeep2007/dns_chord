@@ -72,9 +72,9 @@ def get_records_array(filename):
 
 def sleepTimes():
     """
-    Get records from array
-    :param filename: filename which to read. It must have 'name value' pairs seperated by space.
-    :return: Return an array
+    Get time distribution from pickle
+    :param None
+    :return: Return an kde distribution
     """
     inp_file = open("kernel_density_model.pickle", "rb")
     kde = pickle.load(inp_file)
@@ -115,6 +115,7 @@ def main():
     # workload = ['a.com', 't.com', 'e.com']
 
     workload = [records[i][0] for i in random.sample(xrange(len(records)), len(records))]
+    # workload = workload[:10]
     print(workload)
 
     config(channel={'reliable', 'fifo'})
