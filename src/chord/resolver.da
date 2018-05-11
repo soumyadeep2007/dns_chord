@@ -2,13 +2,6 @@ import logging
 import random
 import hashlib
 import time
-import os
-
-
-# from scipy.stats import norm
-# import pickle
-# import numpy as np
-# from sklearn.neighbors import KernelDensity
 
 class Resolver(process):
     def setup(process_id, m, node_descs, workload, kde):
@@ -65,13 +58,14 @@ class Resolver(process):
         sleepTime = self._kde.sample(1)
         query['sleepTime'] += sleepTime[0] / 2000
         self._end_times[query['request_id']] = time.time()
+        output('Result of query for {query} = {ipaddr}'.format(query=query['key'], ipaddr=result))
         self._resolution_latencies.add((self._end_times[query['request_id']] - self._start_times[query['request_id']]))
         output('{key}, {sleepTime}, {resTime}, {hops}, {nodesList}'.
                format(key=query['key'], hops=query['hops'], sleepTime=int(round(query['sleepTime'][0] * 1000, 0)),
                       resTime=int(
                           round((self._end_times[query['request_id']] - self._start_times[query['request_id']]) * 1000,
                                 0)),
-                      nodesList=query['hops_name_list']), level=logging.CRITICAL)
+                      nodesList=query['hops_name_list']), level=logging.DEBUG)
 
     def _calculate_id(key, m):
         h = int(hashlib.sha1(key.encode('utf-8')).hexdigest(), 16)

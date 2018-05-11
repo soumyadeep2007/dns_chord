@@ -110,13 +110,9 @@ def main():
                 '1.2.3.9', '2.3.4.9', '11.22.33.59', '8.8.8.13', '2.22.1.6', '77.66.3.5']
     node_ips_by_id = {_calculate_id(node_ip, m): node_ip for node_ip in node_ips}
     node_ids_sorted = list(node_ips_by_id.keys())
-    print('len(node_ids_sorted) = ', len(node_ids_sorted))
     node_ids_sorted.sort()
-    # workload = ['a.com', 't.com', 'e.com']
 
-    workload = [records[i][0] for i in random.sample(xrange(len(records)), len(records))]
-    # workload = workload[:]
-    print(workload)
+    workload = [records[i][0] for i in random.sample(xrange(len(records)), len(records))][:100]
 
     config(channel={'reliable', 'fifo'})
     node_process_ids = list(new(m_Node.Node, num=len(node_ids_sorted)))
