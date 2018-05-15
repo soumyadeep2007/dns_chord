@@ -1,0 +1,11 @@
+DNS Resolution time:
+Mean: 195.17 ms	Var: 66.59 ms	Median: 188.00 ms
+Max: 573.00 ms	Min: 28.50 ms
+
+Number of hops statistics:
+Mean: 3.21	Var: 0.80	Median: 4.00
+Max: 5.00	Min: 2.00
+
+Node load statistics:
+Mean: 5345.00	Var: 1508.06	Median: 5011.00
+Max: 7829.00	Min: 3410.00
