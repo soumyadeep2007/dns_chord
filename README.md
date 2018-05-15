@@ -11,3 +11,5 @@ The installation instructions reside in DistAlgo's README.
 This command will run the system and output to the file test.log inside the root directory of the project.
 
 3. Sample logs from our test runs have been included in the logs folder.
+Statistics Logs: Logs used to perform analysis and plot different graphs for different results.
+QueryResolution Logs: Logs showing how dns queries were resolved in chord system.
