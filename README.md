@@ -1,5 +1,5 @@
 # DNS on Chord
-An implementation of DNS on Chord. Chord has been implemented on [DistAlgo](http://distalgo.cs.stonybrook.edu/home), a research programming language for writing distributed algorithms.
+An implementation of DNS on [Chord](https://pdos.csail.mit.edu/papers/ton:chord/paper-ton.pdf). Chord has been implemented on [DistAlgo](http://distalgo.cs.stonybrook.edu/home), a research programming language for writing distributed algorithms.
 
 # Instructions and notes
 
